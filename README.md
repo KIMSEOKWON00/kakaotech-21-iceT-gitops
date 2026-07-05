@@ -6,6 +6,30 @@ Spring Boot 백엔드, ELK 스택(로그/메트릭/APM 모니터링), Redis, 클
 
 ---
 
+## 목차
+
+- [🏗️ 전체 아키텍처](#️-전체-아키텍처)
+- [🔁 배포 방식](#-배포-방식)
+- [🔗 연관 프로젝트](#-연관-프로젝트)
+- [📦 관리 서비스 목록](#-관리-서비스-목록)
+- [🗂️ 프로젝트 구조](#️-프로젝트-구조)
+- [🚀 App of Apps 패턴](#-app-of-apps-패턴)
+  - [syncWave 배포 순서](#syncwave-배포-순서)
+- [🌿 Spring Boot 자체 Helm Chart](#-spring-boot-자체-helm-chart)
+  - [주요 설계 포인트](#주요-설계-포인트)
+  - [prod/dev 환경 분리](#proddev-환경-분리)
+- [📊 ELK 스택 모니터링](#-elk-스택-모니터링)
+  - [접근 도메인 (prod 기준)](#접근-도메인-prod-기준)
+- [🔧 트래픽 흐름](#-트래픽-흐름)
+- [✅ CI — GitHub Actions Helm Lint](#-ci--github-actions-helm-lint)
+- [🚦 시작하기](#-시작하기)
+  - [사전 조건](#사전-조건)
+  - [App of Apps 등록](#app-of-apps-등록)
+- [⚠️ 보안 주의사항](#️-보안-주의사항)
+- [🛠️ 기술 스택](#️-기술-스택)
+
+---
+
 ## 🏗️ 전체 아키텍처
 
 ```mermaid
@@ -32,6 +56,18 @@ graph TB
 - 더 상세한 Mermaid 다이어그램(ELK 데이터 흐름, App of Apps 구조 등)은 [`docs/architecture.md`](./docs/architecture.md)에서 확인할 수 있습니다.
 
 > 📸 *스크린샷 자리: ArgoCD UI에서 `apps-root-prod`/`apps-root-dev`가 Synced 상태로 표시되는 화면 (추가 예정)*
+
+---
+
+## 🔁 배포 방식
+
+이 리포지토리를 ArgoCD에 연결하면 아래 방식으로 배포가 진행됩니다.
+
+1. **GitOps App of Apps** — 최상위 Application(`apps-root-dev`/`apps-root-prod`)이 `argo-apps/apps-dev`·`apps-prod` 디렉토리를 재귀 참조(`directory.recurse: true`)해 하위 Application들을 자동 생성합니다. `kubectl apply -f argo-apps/app-of-apps-*.yaml` 한 번으로 전체 스택이 등록됩니다.
+2. **완전 자동 동기화 (Auto-Sync)** — 모든 Application이 `syncPolicy.automated: { prune: true, selfHeal: true }`로 설정되어 있어, Sync 버튼 없이 Git 변경이 즉시 반영되고(prune) 클러스터에서 수동으로 변경된 리소스는 자동으로 Git 상태로 복구됩니다(selfHeal) — Push가 아닌 **Pull 기반 GitOps**입니다.
+3. **sync-wave 기반 순차 배포** — `argocd.argoproj.io/sync-wave` 어노테이션으로 인프라(EBS CSI Driver) → 스토리지/메트릭 → 데이터스토어(ES/Redis) → 모니터링(Kibana/APM) → 수집기(Filebeat/Metricbeat) → 애플리케이션(Spring) 순으로 단계적으로 배포됩니다. 자세한 표는 [App of Apps 패턴](#-app-of-apps-패턴) 참고.
+4. **환경별 values 오버라이드** — Spring Chart(`apps/base/spring`) 하나를 prod/dev 공용으로 사용하고, ArgoCD Application의 `helm.valueFiles`로 `env/dev/values-dev.yaml` / `env/prod/values-prod.yaml`을 오버라이드해 환경을 분리합니다.
+5. **애플리케이션 배포 전략** — `apps/base/spring/templates/deployment.yaml`은 표준 `apps/v1 Deployment`로, 별도 `strategy` 지정이 없어 쿠버네티스 기본값인 **RollingUpdate**로 배포됩니다. (참고: 최상위 `helm/` 폴더에 Argo Rollouts Blue-Green 실험 차트가 있으나 어떤 Application에서도 참조되지 않는 미사용 상태)
 
 ---
 
