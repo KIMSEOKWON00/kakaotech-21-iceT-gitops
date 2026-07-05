@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apm-server-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/elastic/helm-charts.git
+    targetRevision: main
+    path: apm-server
+    helm:
+      values: |
+        imageTag: 8.5.1
+
+        ## dev: 경량화 (리소스 낮춤)
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 300m
+            memory: 512Mi
+
+        elasticsearchHosts: ["https://elasticsearch-master.elk-dev.svc:9200"]
+
+        output.elasticsearch:
+          hosts: ["https://elasticsearch-master.elk-dev.svc:9200"]
+          username: "elastic"
+          password: "changeme1234"
+          ssl:
+            enabled: true
+            verification_mode: none
+
+        apm-server:
+          host: "0.0.0.0:8200"
+          # dev: 경량화 — prod ALB(koco-alb-group)/도메인 인증서 공유 문제를 피하기 위해
+          # ingress 비활성화 (필요 시 port-forward로 접근)
+          ingress:
+            enabled: false
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: elk-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

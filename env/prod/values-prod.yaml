@@ -1,4 +1,4 @@
-ebsCsiIrsaRoleArn: arn:aws:iam::266735804784:role/AmazonEKS_EBS_CSI_Driver_IRSA
+# ebsCsiIrsaRoleArn: (EBS CSI IRSA는 ebs-csi-driver Application에서 관리)
 
 autoscaling:
   enabled: true
@@ -7,8 +7,21 @@ autoscaling:
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
 
-logging:
-  persistence:
-    enabled: true
-    size: 5Gi
-    storageClass: gp2
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: ebs-sc
+
+ingress:
+  host: api.ktbkoco.com
+  certificateArn: "arn:aws:acm:ap-northeast-2:266735804784:certificate/5f2a8c3b-a576-4295-84c1-beb75ca562d9"
+  # ⚠️ 사용 환경의 ACM 인증서 ARN으로 교체 필요
+  # 이 인증서가 아래 도메인을 모두 커버하는지 확인:
+  # - api.ktbkoco.com
+  # - kibana.ktbkoco.com
+  # - apm.ktbkoco.com
+  # 와일드카드(*.ktbkoco.com) 또는 SAN 인증서 권장
+  #
+  # ACM 인증서 SAN 확인 방법:
+  # aws acm describe-certificate --certificate-arn <ARN> \
+  #   --query 'Certificate.SubjectAlternativeNames'

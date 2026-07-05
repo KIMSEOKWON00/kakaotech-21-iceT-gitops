@@ -1,4 +1,4 @@
-{{- if .Values.logging.persistence.enabled }}
+{{- if .Values.persistence.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -8,6 +8,6 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.logging.persistence.size }}
-  storageClassName: {{ .Values.logging.persistence.storageClass }}
-{{- end }} 
+      storage: {{ .Values.persistence.size }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+{{- end }}

@@ -1,10 +1,32 @@
 replicaCount: 2
 image:
-  repository: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-app
-  tag: prod-20240617-a1b2c3
-  pullPolicy: IfNotPresent
-env:
-  profile: prod
-ingress:
+  repository: 266735804784.dkr.ecr.ap-northeast-2.amazonaws.com/eks-app-repo
+  tag: v1.0.3
+  # pullPolicy: (deployment.yaml에 imagePullPolicy 필드가 없어 미참조 - dead config)
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+autoscaling:
   enabled: true
-  host: api.kakaotech.com
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: ebs-sc
+  mountPath: /app/logs
+# env:
+#   profile: (템플릿 어디에서도 참조되지 않음 - dead config, profile은 spring-env-secret으로 주입됨, SECRET-SETUP.md 참고)
+ingress:
+  # enabled: (ingress.yaml이 조건 없이 항상 렌더링되어 미참조 - dead config)
+  host: api.kakaotech.com  # 기본값 - prod/dev 환경에서 항상 오버라이드됨 (env/{prod,dev}/values-*.yaml 참고)
+  certificateArn: ""
+  # ⚠️ 사용 환경의 ACM 인증서 ARN으로 교체 필요
+  # aws acm list-certificates --region ap-northeast-2
+  # 와일드카드(*.ktbkoco.com) 또는 SAN 인증서 권장

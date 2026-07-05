@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: spring-prod
+  name: spring-dev
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "4"
@@ -13,11 +13,11 @@ spec:
     path: apps/base/spring
     helm:
       valueFiles:
-      - ../../../env/prod/values-prod.yaml
-      releaseName: spring-prod
+      - ../../../env/dev/values-dev.yaml
+      releaseName: spring-dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: spring-prod
+    namespace: spring-dev
   syncPolicy:
     automated:
       prune: true

@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: aws-ebs-csi-driver
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default
   source:
@@ -26,4 +28,5 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - ServerSideApply=true       
+      - CreateNamespace=true
+      - ServerSideApply=true

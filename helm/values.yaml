@@ -1,3 +1,5 @@
+# 실험적 차트 — 현재 미사용
+# 실제 운영 차트: apps/base/spring/
 replicaCount: 2
 image:
   repository: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/spring-app

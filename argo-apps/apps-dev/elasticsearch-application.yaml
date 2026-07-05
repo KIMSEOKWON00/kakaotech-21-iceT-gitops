@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: elasticsearch
+  name: elasticsearch-dev
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"
@@ -13,8 +13,6 @@ spec:
     path: elasticsearch        # <-- community chart의 디렉터리
     helm:
       values: |
-        # ⚠️ 데모 환경 설정: xpack.security.enabled: false
-        # 프로덕션 전환 시 true로 변경 및 Secret 생성 필요
         replicas: 1
         minimumMasterNodes: 1
         esConfig:
@@ -22,16 +20,25 @@ spec:
             node.store.allow_mmap: false
             xpack.security.enabled: false
 
-        ## ─── persistence 설정 ─────────────────────
+        ## ─── dev: 경량화 (리소스 낮춤) ─────────────────────
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+
+        ## ─── persistence 설정 (dev: 용량 축소) ─────────────
         persistence:
           enabled: true
           storageClass: ebs-sc      # 클러스터에 존재하는 SC 이름
-          size: 30Gi             # 필요 용량으로 조정
-        
+          size: 10Gi             # dev용 축소 용량
+
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: elk
+    namespace: elk-dev
   syncPolicy:
     automated:
       prune: true

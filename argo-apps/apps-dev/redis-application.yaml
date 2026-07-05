@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: redis
+  name: redis-dev
   namespace: argocd             # Argo CD가 설치된 네임스페이스
   annotations:
     argocd.argoproj.io/sync-wave: "1"
@@ -13,14 +13,20 @@ spec:
     targetRevision: "19.5.4"    # 원하는 차트 버전
     helm:
       values: |-
-        # ⚠️ 데모 환경 설정: auth.enabled: false
-        # 프로덕션 전환 시 true로 변경 및 Secret 생성 필요
         auth:
           enabled: false               # 패스워드 없이 운영
         architecture: standalone       # 단일 인스턴스 모드
+        ## dev: 경량화 (리소스 낮춤)
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
         persistence:
-          enabled: true                # PVC 사용
-          size: 5Gi                    # 디스크 크기
+          enabled: true
+          size: 2Gi                    # dev용 축소 용량
           storageClass: ebs-sc         # PVC용 스토리지 클래스
         global:
           storageClass: ebs-sc         # 전체 차트에서 사용할 기본 스토리지 클래스
@@ -31,7 +37,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: redis                  # Redis를 배포할 네임스페이스
+    namespace: redis-dev               # dev 전용 네임스페이스 (prod와 격리)
   syncPolicy:
     automated:
       prune: true      # 매니페스트에서 제거된 리소스 자동 삭제

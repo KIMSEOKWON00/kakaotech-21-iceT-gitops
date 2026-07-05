@@ -4,7 +4,7 @@ metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 spec:
-  replicas: 2
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: springboot
@@ -21,9 +21,42 @@ spec:
         node-group: app
       containers:
         - name: springboot
-          image: 266735804784.dkr.ecr.ap-northeast-2.amazonaws.com/eks-app-repo:v1.0.3
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: 8080
+          # 주의: spring-env-secret은 ArgoCD 배포 전
+          # 클러스터에 사전 생성 필요
+          # 참고: SECRET-SETUP.md
           envFrom:
             - secretRef:
                 name: spring-env-secret
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: logs
+              mountPath: {{ .Values.persistence.mountPath }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-logs
+      {{- end }}

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: filebeat
+  name: filebeat-dev
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "3"
@@ -18,6 +18,14 @@ spec:
           enabled: true
         deployment:
           enabled: false
+        ## dev: 경량화 (리소스 낮춤)
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
         filebeatConfig:
           filebeat.yml: |
             filebeat.inputs:
@@ -26,7 +34,7 @@ spec:
                 paths:
                   - /var/log/*.log
             output.elasticsearch:
-              hosts: ["https://elasticsearch-master.elk.svc:9200"]
+              hosts: ["https://elasticsearch-master.elk-dev.svc:9200"]
               username: "elastic"
               password: "changeme1234"
               ssl:
@@ -34,7 +42,7 @@ spec:
                 verification_mode: none
   destination:
     server: https://kubernetes.default.svc
-    namespace: elk
+    namespace: elk-dev
   syncPolicy:
     automated:
       prune: true

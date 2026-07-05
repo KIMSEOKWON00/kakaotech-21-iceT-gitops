@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kibana-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/elastic/helm-charts.git'
+    path: kibana
+    targetRevision: main
+    helm:
+      values: |
+        imageTag: 8.5.1
+        replicas: 1
+        ## dev: 경량화 (리소스 낮춤)
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 300m
+            memory: 512Mi
+        elasticsearchHosts: "https://elasticsearch-master.elk-dev.svc:9200"
+        kibanaConfig:
+          kibana.yml: |
+            server.host: "0.0.0.0"
+            server.port: 5601
+
+            elasticsearch.hosts: [ "https://elasticsearch-master.elk-dev.svc:9200" ]
+            elasticsearch.ssl.verificationMode: none
+            elasticsearch.requestTimeout: 30000
+            elasticsearch.pingTimeout: 1500
+
+            xpack.security.enabled: false
+
+            status.allowAnonymous: true
+
+        # dev: 경량화 — prod ALB(koco-alb-group)/도메인 인증서 공유 문제를 피하기 위해
+        # ingress 비활성화 (필요 시 port-forward로 접근)
+        ingress:
+          enabled: false
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: elk-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

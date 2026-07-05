@@ -4,6 +4,7 @@ metadata:
   name: ebs-sc
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"  # optional
+    argocd.argoproj.io/sync-wave: "0"
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3

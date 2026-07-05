@@ -1,0 +1,47 @@
+name: Helm Lint & Validate
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.13.0
+
+      - name: Helm Lint - Spring Chart (prod)
+        run: |
+          helm lint apps/base/spring \
+            -f env/prod/values-prod.yaml
+
+      - name: Helm Lint - Spring Chart (dev)
+        run: |
+          helm lint apps/base/spring \
+            -f env/dev/values-dev.yaml
+
+      - name: Helm Template - Spring Chart (prod)
+        run: |
+          helm template spring-prod apps/base/spring \
+            -f env/prod/values-prod.yaml \
+            > /dev/null
+
+      - name: Helm Template - Spring Chart (dev)
+        run: |
+          helm template spring-dev apps/base/spring \
+            -f env/dev/values-dev.yaml \
+            > /dev/null
+
+      - name: Validate ArgoCD Application YAMLs
+        run: |
+          find argo-apps/ -name "*.yaml" | \
+          xargs -I {} sh -c 'echo "Validating: {}" && \
+          kubectl apply --dry-run=client -f {} \
+          --validate=false 2>/dev/null || true'

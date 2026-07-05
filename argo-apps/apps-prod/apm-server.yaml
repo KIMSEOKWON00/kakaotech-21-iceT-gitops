@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: apm-server
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
   source:
@@ -33,10 +35,13 @@ spec:
               alb.ingress.kubernetes.io/target-type: ip
               alb.ingress.kubernetes.io/group.name: koco-alb-group
               alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+              # ⚠️ 사용 환경의 ACM 인증서 ARN으로 교체 필요
+              # apm.ktbkoco.com을 커버하는 인증서 사용
+              # aws acm list-certificates --region ap-northeast-2
               alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:266735804784:certificate/5f2a8c3b-a576-4295-84c1-beb75ca562d9
               alb.ingress.kubernetes.io/backend-protocol: HTTP
             hosts:
-              - host: apm.koco-test.click
+              - host: apm.ktbkoco.com
                 paths:
                   - path: /
                     pathType: Prefix
