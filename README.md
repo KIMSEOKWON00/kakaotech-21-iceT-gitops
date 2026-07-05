@@ -1,8 +1,13 @@
 # 21-iceT-gitops
 
-> EKS 기반 Spring Boot 애플리케이션을 ArgoCD App of Apps 패턴으로 관리하는 GitOps 리포지토리
+## 한 줄 소개
 
-이 리포지토리는 EKS 인프라를 프로비저닝하는 [kakaotech-eks-infra](https://github.com/KIMSEOKWON00/kakaotech-eks-infra) 프로젝트와 연동되어 동작합니다.
+EKS 기반 Spring Boot 애플리케이션을 ArgoCD App of Apps 패턴으로 관리하는 GitOps 리포지토리
+
+---
+
+
+**이 리포지토리는 EKS 인프라를 프로비저닝하는 [kakaotech-eks-infra](https://github.com/KIMSEOKWON00/kakaotech-eks-infra) 프로젝트와 연동되어 동작합니다.**
 
 Spring Boot 백엔드, ELK 스택(로그/메트릭/APM 모니터링), Redis, 클러스터 인프라 애드온(EBS CSI Driver, StorageClass, metrics-server)까지 전체 애플리케이션·인프라 스택을 하나의 Git 리포지토리에서 선언적으로 관리합니다. `prod`/`dev` 두 환경을 독립된 App of Apps 루트로 분리해 운영합니다.
 
